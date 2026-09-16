@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model chambres {
+  id Int @id @default(autoincrement())
+  hotelId Int @map("hotel_id")
+  numero String
+  categorie String
+  capacite Int
+  prixNuit Int @map("prix_nuit")
+  description String
+  disponible Boolean @default(true)
+
+  hotel hotels @relation(fields: [hotelId], references: [id])
+  reservation reservations[]
+  
+  @@map("Chambres")
+}
+
+model comptes {
+  id Int @id @default(autoincrement())
+  role String
+  email String
+  motDePasse String @map("mot_de_passe_clair")
+  nom String
+  prenom String
+  hotelId Int? @map("hotel_id")
+
+  hotel hotels? @relation(fields: [hotelId], references: [id])
+
+  @@map("Comptes")
+}
+
+model hotels {
+  id Int @id @default(autoincrement())
+  nom String
+  etoiles Int
+  adresse String
+  codePostal String @map("code_postal")
+  ville String
+  telephone String
+  email String
+  gerant String
+  description String
+
+  chambre chambres[]
+  compte comptes[]
+
+  @@map("Hotels")
+}
+
+model reservations {
+  id Int @id @default(autoincrement())
+  voyageurId Int @map("voyageur_id")
+  chambreId Int @map("chambre_id")
+  dateArrivee DateTime @map("date_arrivee")
+  dateDepart DateTime @map("date_depart")
+  nbPersonnes Int @map("nb_personnes")
+  statut String
+  demandeSpeciale String? @map("demande_speciale")
+
+  chambre chambres @relation(fields: [chambreId], references: [id])
+
+  @@map("Reservation")
+}
+
+

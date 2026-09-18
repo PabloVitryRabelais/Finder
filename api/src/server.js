@@ -55,6 +55,8 @@ app.get("/reservations/:id", async (req, res) => {
 
 app.get("/chambres", async (req, res) => {
   const { categorie } = req.query;
+  const dateDebut = new Date(req.query.date_debut);
+  const dateFin = new Date(req.query.date_fin);
   const prixMax = Number(req.query.prix_max);
   const hotelId = Number(req.query.hotel);
   const capacite = Number(req.query.capacite);
@@ -62,11 +64,29 @@ app.get("/chambres", async (req, res) => {
 
   if (req.query.prix_max !== undefined && !Number.isNaN(prixMax))
     where.prixNuit = { lte: prixMax };
+
   if (categorie) where.categorie = categorie;
+
   if (req.query.hotel !== undefined && !Number.isNaN(hotelId))
     where.hotelId = hotelId;
+
   if (req.query.capacite !== undefined && !Number.isNaN(capacite))
     where.capacite = capacite;
+
+  if (!Number.isNaN(dateDebut.getTime()) && !Number.isNaN(dateFin.getTime())) {
+    if (dateDebut >= dateFin) {
+      return res
+        .status(400)
+        .json({ erreur: "La date de début doit être < à la date de fin" });
+    }
+    const reservations = await prisma.reservations.findMany({
+      where: {
+        dateArrivee: { gte: dateDebut, lte: dateFin },
+        dateDepart: { gte: dateDebut, lte: dateFin },
+      },
+    });
+    where.id = { notIn: reservations.map((r) => r.chambreId) };
+  }
   res.json(await prisma.chambres.findMany({ where }));
 });
 

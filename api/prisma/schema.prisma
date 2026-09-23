@@ -36,6 +36,8 @@ model comptes {
   motDePasse String @map("mot_de_passe_clair")
   nom String
   prenom String
+  telephone String? @map("telephone")
+  note String? @map("note")
   hotelId Int? @map("hotel_id")
 
   hotel hotels? @relation(fields: [hotelId], references: [id])

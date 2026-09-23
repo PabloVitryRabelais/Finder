@@ -50,6 +50,8 @@ async function main() {
       nom: c.nom,
       prenom: c.prenom,
       hotelId: c.hotel_id,
+      telephone: c.telephone,
+      note: c.note,
     })),
   );
 

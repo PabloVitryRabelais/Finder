@@ -5,18 +5,11 @@ import path from "node:path";
 import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 import jwt from "jsonwebtoken";
-import { z } from "zod";
+import { schemaChambre, schemaRegister, validerQuery } from "./schema.js";
 
 const app = express();
 const prisma = new PrismaClient();
 app.use(express.json());
-
-const validerQuery = (schema) => (req, res, next) => {
-  const r = schema.safeParse(req.query);
-  if (!r.success) return res.status(400).json({ erreur: r.error.format() });
-  req.body = r.data;
-  next();
-};
 
 function authRequis(req, res, next) {
   const header = req.headers.authorization || "";
@@ -132,22 +125,6 @@ app.get("/chambres/:id", authRequis, async (req, res) => {
   res.json(chambre);
 });
 
-const chambresExistantes = await prisma.chambres.findMany({
-  select: { numero: true },
-});
-
-const schemaChambre = z.object({
-  numero: z
-    .string()
-    .refine((numero) => !chambresExistantes.some((c) => c.numero === numero), {
-      message: "Ce numéro de chambre existe déjà",
-    }),
-  categorie: z.enum(["double", "suite", "simple", "familiale"]),
-  capacite: z.number().positive(),
-  prixNuit: z.number().positive(),
-  description: z.string(),
-});
-
 app.post(
   "/chambres",
   authRequis,
@@ -155,6 +132,14 @@ app.post(
   validerQuery(schemaChambre),
   async (req, res) => {
     try {
+      const chambreExistante = await prisma.chambres.findFirst({
+        where: { numero: req.body.numero, hotelId: req.user.hotelId },
+      });
+      if (chambreExistante) {
+        return res.status(409).json({
+          erreur: "Ce numéro de chambre existe déjà",
+        });
+      }
       const chambre = await prisma.chambres.create({
         data: {
           ...req.body,
@@ -196,14 +181,6 @@ app.delete("/chambres/:id", authRequis, async (req, res) => {
   } catch {
     res.status(404).json({ erreur: "Chambre introuvable" });
   }
-});
-
-const schemaRegister = z.object({
-  email: z.email(),
-  mdp: z.string().min(8),
-  nom: z.string().min(2),
-  prenom: z.string().min(2),
-  telephone: z.string().min(10).max(15),
 });
 
 app.post("/auth/register", validerQuery(schemaRegister), async (req, res) => {

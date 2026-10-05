@@ -372,6 +372,18 @@ app.patch(
   },
 );
 
+/**
+ * @openapi
+ * /reservations/{id}:
+ *  delete:
+ *    summary: Permet au voyageur d'annuler une reservation
+ *    security: [{ bearerAuth: [] }]
+ *    responses:
+ *      200: { description: Reservation annulee }
+ *      404: { description: La reservation n'existe pas }
+ *      403: { description: Le voyageur n'a pas acces a cette reservation }
+ *      409: { description: La reservation ne peut pas etre annulee }
+ */
 app.delete(
   "/reservations/:id",
   authRequis,
@@ -404,6 +416,28 @@ app.delete(
 
 //CHAMBRES
 
+/**
+ * @openapi
+ * /chambres:
+ *  get:
+ *    summary: Données de toutes les chambres selon les paramètres de renseignés
+ *    requestBody:
+ *      required: true
+ *      content:
+ *       application/json:
+ *        schema:
+ *          type: object
+ *          properties:
+ *            categorie: { type: string }
+ *            date_debut: { type: string }
+ *            date_fin: { type: string }
+ *            prix_max: { type: number }
+ *            hotel: { type: number }
+ *            capacite: { type: number }
+ *   responses:
+ *    200: { description: L'entiereté des chambres selon les paramètres renseignés }
+ *    400: { description: Les dates sont mal renseignées }
+ */
 app.get("/chambres", validerQuery(schemaGetChambre), async (req, res) => {
   const { categorie } = req.body;
   const dateDebut = new Date(req.body.date_debut);
@@ -436,6 +470,21 @@ app.get("/chambres", validerQuery(schemaGetChambre), async (req, res) => {
   res.json(await prisma.chambres.findMany({ where }));
 });
 
+/**
+ * @openapi
+ * /chambres/{id}:
+ *  get:
+ *    summary: Données d'une chambre
+ *    security: [{ bearerAuth: [] }]
+ *    parameters:
+ *      - name: id
+ *        in: path
+ *        required: true
+ *        schema: { type: number }
+ *    responses:
+ *      200: { description: La chambre demandée }
+ *      404: { description: La chambre n'existe pas }
+ */
 app.get("/chambres/:id", authRequis, async (req, res) => {
   const id = Number(req.params.id);
   const chambre = await prisma.chambres.findUnique({ where: { id: id } });
@@ -443,6 +492,30 @@ app.get("/chambres/:id", authRequis, async (req, res) => {
   res.json(chambre);
 });
 
+/**
+ * @openapi
+ * /chambres:
+ *  post:
+ *    summary: Permet a l'hotelier d'ajouter une chambre
+ *    security: [{ bearerAuth: [] }]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            required: [numero, categorie, capacite, prixNuit, description]
+ *            properties:
+ *              numero: { type: string }
+ *              categorie: { type: string }
+ *              capacite: { type: number }
+ *              prixNuit: { type: number }
+ *              description: { type: string }
+ *    responses:
+ *      201: { description: Chambre ajoutée }
+ *      400: { description: Les données sont mal renseignées }
+ *      409: { description: Le numéro de chambre existe déjà }
+ */
 app.post(
   "/chambres",
   authRequis,
@@ -475,6 +548,34 @@ app.post(
   },
 );
 
+/**
+ * @openapi
+ * /chambres/{id}:
+ *  patch:
+ *    summary: Permet a l'hotelier de modifier une chambre
+ *    security: [{ bearerAuth: [] }]
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema: { type: integer }
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              numero: { type: string }
+ *              categorie: { type: string }
+ *              capacite: { type: number }
+ *              prixNuit: { type: number }
+ *              description: { type: string }
+ *    responses:
+ *      200: { description: Chambre modifiée }
+ *      403: { description: Acces refusé }
+ *      404: { description: Chambre introuvable }
+ */
 app.patch(
   "/chambres/:id",
   authRequis,
@@ -499,17 +600,66 @@ app.patch(
   },
 );
 
-app.delete("/chambres/:id", authRequis, async (req, res) => {
-  try {
-    await prisma.chambres.delete({ where: { id: Number(req.params.id) } });
-    res.status(204).send();
-  } catch {
-    res.status(404).json({ erreur: "Chambre introuvable" });
-  }
-});
+/**
+ * @openapi
+ * /chambres/{id}:
+ *  delete:
+ *    summary: Permet a l'hotelier de supprimer une chambre
+ *    security: [{ bearerAuth: [] }]
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        required: true
+ *        schema: { type: integer }
+ *    responses:
+ *      204: { description: Chambre supprimée }
+ *      403: { description: Acces refusé }
+ *      404: { description: Chambre introuvable }
+ */
+app.delete(
+  "/chambres/:id",
+  authRequis,
+  exigeRole("hotelier"),
+  async (req, res) => {
+    const validation = await prisma.chambres.findFirst({
+      where: { id: Number(req.params.id), hotelId: req.user.hotelId },
+    });
+    if (!validation) {
+      return res.status(403).json({ erreur: "Acces refusé" });
+    }
+    try {
+      await prisma.chambres.delete({ where: { id: Number(req.params.id) } });
+      res.status(204).send();
+    } catch {
+      res.status(404).json({ erreur: "Chambre introuvable" });
+    }
+  },
+);
 
 // CONNEXION
 
+/**
+ * @openapi
+ * /auth/register:
+ *  post:
+ *    summary: Permet a un voyageur de créer un compte
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            required: [email, prenom, nom, mdp, telephone]
+ *            properties:
+ *              email: { type: string }
+ *              prenom: { type: string }
+ *              nom: { type: string }
+ *              mdp: { type: string }
+ *              telephone: { type: string }
+ *    responses:
+ *      201: { description: Compte créé }
+ *      400: { description: Données invalides }
+ */
 app.post("/auth/register", validerQuery(schemaRegister), async (req, res) => {
   try {
     const compte = await prisma.comptes.create({
@@ -526,6 +676,25 @@ app.post("/auth/register", validerQuery(schemaRegister), async (req, res) => {
   }
 });
 
+/**
+ * @openapi
+ * /auth/login:
+ *  post:
+ *    summary: Permet a un voyageur de se connecter
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            required: [email, mdp]
+ *            properties:
+ *              email: { type: string }
+ *              mdp: { type: string }
+ *    responses:
+ *      200: { description: Connexion réussie }
+ *      401: { description: Identifiants invalides }
+ */
 app.post("/auth/login", validerQuery(schemaLogin), async (req, res) => {
   const { email, mdp } = req.body;
   const adherent = await prisma.comptes.findFirst({ where: { email } });
@@ -544,15 +713,60 @@ app.post("/auth/login", validerQuery(schemaLogin), async (req, res) => {
   res.json({ token });
 });
 
+/**
+ * @openapi
+ * /auth/logout:
+ *  post:
+ *    summary: Permet a un voyageur de se déconnecter
+ *    security: [{ bearerAuth: [] }]
+ *    responses:
+ *      204: { description: Déconnexion réussie }
+ */
 app.post("/auth/logout", authRequis, (req, res) => res.status(204).end());
 
-app.get("/voyageurs/me", authRequis, async (req, res) => {
-  const compte = await prisma.comptes.findUnique({
-    where: { id: req.user.userId },
-  });
-  res.json(compte);
-});
+/**
+ * @openapi
+ * /voyageurs/me:
+ *  get:
+ *    summary: Données du compte du voyageur connecté
+ *    security: [{ bearerAuth: [] }]
+ *    responses:
+ *      200: { description: Données du compte }
+ */
+app.get(
+  "/voyageurs/me",
+  authRequis,
+  exigeRole("voyageur"),
+  async (req, res) => {
+    const compte = await prisma.comptes.findUnique({
+      where: { id: req.user.userId },
+    });
+    res.json(compte);
+  },
+);
 
+/**
+ * @openapi
+ * /voyageurs/me:
+ *  patch:
+ *    summary: Met à jour les informations du compte du voyageur connecté
+ *    security: [{ bearerAuth: [] }]
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              email: { type: string }
+ *              prenom: { type: string }
+ *              nom: { type: string }
+ *              mdp: { type: string }
+ *              telephone: { type: string }
+ *    responses:
+ *      200: { description: Compte mis à jour }
+ *      400: { description: Données invalides }
+ */
 app.patch(
   "/voyageurs/me",
   authRequis,

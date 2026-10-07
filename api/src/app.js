@@ -590,30 +590,34 @@ app.post(
  *    responses:
  *      200: { description: Chambre modifiée }
  *      403: { description: Acces refusé }
- *      404: { description: Chambre introuvable }
- *      400: { description: Les données sont mal renseignées }
+ *      400: { description: Les données sont mal renseignées ou la modification a échouée }
  *      401: { description: Il faut etre connecté }
  */
 app.patch(
   "/chambres/:id",
   authRequis,
   exigeRole("hotelier"),
-  validerBody(schemaChambre.partial()),
+  validerQuery(schemaChambre.partial()),
   async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ erreur: "Identifiant de chambre invalide" });
+    }
+
     const validation = await prisma.chambres.findFirst({
-      where: { id: Number(req.params.id), hotelId: req.user.hotelId },
+      where: { id, hotelId: req.user.hotelId },
     });
     if (!validation) {
       return res.status(403).json({ erreur: "Acces refusé" });
     }
     try {
       const chambre = await prisma.chambres.update({
-        where: { id: Number(req.params.id) },
+        where: { id },
         data: req.body,
       });
       res.json(chambre);
-    } catch {
-      res.status(404).json({ erreur: "Chambre introuvable" });
+    } catch (e) {
+      res.status(400).json({ erreur: e.message });
     }
   },
 );

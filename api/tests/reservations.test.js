@@ -21,15 +21,10 @@ describe("GET /reservations/mine", () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  it("/reservations/mine sans token -> 200; json: reservations", async () => {
-    const token = (
-      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
-    ).body.token;
-    const res = await request(app)
-      .get("/reservations/mine")
-      .set("Authorization", `Bearer ${token}`);
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+  it("/reservations/mine sans token -> 401; json: il faut être connecté", async () => {
+    const res = await request(app).get("/reservations/mine");
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty("erreur");
   });
 
   it("/reservations/mine token hotelier-> 403; json: accès refusé", async () => {
@@ -42,6 +37,204 @@ describe("GET /reservations/mine", () => {
       .get("/reservations/mine")
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty("erreur");
+  });
+});
+
+describe("GET /reservations/received", () => {
+  it("/reservations/received token hotelier-> 200; json: reservations", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .get("/reservations/received")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("/reservations/received token voyageur-> 403; json: accès refusé", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .get("/reservations/received")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations/received sans token -> 401; json: il faut être connecté", async () => {
+    const res = await request(app).get("/reservations/received");
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty("erreur");
+  });
+});
+
+describe("GET /reservations/:id", () => {
+  it("/reservations/1 -> 200; json: reservation", async () => {
+    const res = await request(app).get("/reservations/1");
+    expect(res.statusCode).toBe(200);
+    expect(res.body.id).toBe(1);
+  });
+
+  it("/reservations/999 -> 404; json: reservation introuvable", async () => {
+    const res = await request(app).get("/reservations/999");
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toHaveProperty("erreur");
+  });
+});
+
+describe("POST /reservations", () => {
+  it("/reservations?chambreId=1&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2 token voyageur -> 201; json: reservation créée", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .post(
+        "/reservations?chambreId=1&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2",
+      )
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(201);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("/reservations?chambreId=1&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2 sans token -> 401; json: il faut être connecté", async () => {
+    const res = await request(app).post(
+      "/reservations?chambreId=1&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2",
+    );
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations?chambreId=1&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2 token hotelier -> 403; json: accès refusé", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .post(
+        "/reservations?chambreId=1&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2",
+      )
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations?chambreId=999&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2 token voyageur -> 404; json: chambre introuvable", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .post(
+        "/reservations?chambreId=999&dateDebut=2024-06-01&dateFin=2024-06-05&nbpersonnes=2",
+      )
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations?chambreId=1&dateDebut=2024-06-05&dateFin=2024-06-01&nbpersonnes=2 token voyageur -> 400; json: dates mal renseignées", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .post(
+        "/reservations?chambreId=1&dateDebut=2024-06-05&dateFin=2024-06-01&nbpersonnes=2",
+      )
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations?chambreId=1&dateDebut=2024-06-01 token voyageur -> 400; json: données mal renseignées", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .post("/reservations?chambreId=1&dateDebut=2024-06-01")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toHaveProperty("erreur");
+  });
+});
+
+describe("PATCH /reservations/:id", () => {
+  const id = async () => {
+    const chambres = await request(app).get("/reservations");
+    return chambres.body[chambres.body.length - 1].id;
+  };
+
+  it("/reservations/id?statut=confirmee token hotelier -> 200; json: reponse envoyée", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .patch(`/reservations/${await id()}?statut=confirmee`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("/reservations/id?statut=confirmee token hotelier -> 404; json: reservation inexistante", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .patch(`/reservations/1000?statut=confirmee`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations/id?statut=confirmee token hotelier -> 403; json: acces refuse", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .patch(`/reservations/22?statut=confirmee`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations/id?statut=confirmee token voyageur -> 403; json: acces refuse", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .patch(`/reservations/22?statut=confirmee`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations/id?statut=en_attente token hotelier -> 409; json: données mal renseignée", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .patch(`/reservations/${await id()}?statut=en_attente`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(409);
+    expect(res.body).toHaveProperty("erreur");
+  });
+
+  it("/reservations/id?statut=confirmee sans token -> 401; json: il faut etre connecté", async () => {
+    const res = await request(app).patch(
+      `/reservations/${await id()}?statut=confirmee`,
+    );
+    expect(res.statusCode).toBe(401);
     expect(res.body).toHaveProperty("erreur");
   });
 });

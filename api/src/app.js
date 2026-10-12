@@ -271,7 +271,7 @@ app.get("/reservations/:id", async (req, res) => {
  *    responses:
  *      201: { description: Reservation effectuée }
  *      404: { description: La chambre n'existe pas }
- *      400: { description: Les dates sont mal renseignées }
+ *      400: { description: Les données sont mal renseignées }
  *      401: { description: Il faut etre connecté }
  *      403: { description: Le compte connecté n'est pas un voyageur }
  */
@@ -299,7 +299,7 @@ app.post(
         chambreId: req.body.chambreId,
         dateArrivee: new Date(req.body.dateDebut),
         dateDepart: new Date(req.body.dateFin),
-        nbPersonnes: req.body.nbPersonnes,
+        nbPersonnes: Number(req.body.nbPersonnes),
         demandeSpeciale: req.body.demandeSpeciale || "",
         statut: "en attente",
       },
@@ -333,7 +333,7 @@ app.post(
  *      200: { description: Reponse reussie }
  *      404: { description: La reservation n'existe pas }
  *      403: { description: Acces refusé }
- *      400: { description: La reponse a echouée ou les données sont mal renseignées }
+ *      409: { description: Transition impossible }
  *      401: { description: Il faut etre connecté }
  */
 app.patch(
@@ -601,7 +601,9 @@ app.patch(
   async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id <= 0) {
-      return res.status(400).json({ erreur: "Identifiant de chambre invalide" });
+      return res
+        .status(400)
+        .json({ erreur: "Identifiant de chambre invalide" });
     }
 
     const validation = await prisma.chambres.findFirst({
@@ -636,8 +638,7 @@ app.patch(
  *        schema: { type: integer }
  *    responses:
  *      204: { description: Chambre supprimée }
- *      403: { description: Acces refusé }
- *      404: { description: Chambre introuvable }
+ *      403: { description: Acces refusé OU chambre introuvable }
  *      401: { description: Il faut etre connecté }
  */
 app.delete(
@@ -651,12 +652,8 @@ app.delete(
     if (!validation) {
       return res.status(403).json({ erreur: "Acces refusé" });
     }
-    try {
-      await prisma.chambres.delete({ where: { id: Number(req.params.id) } });
-      res.status(204).send();
-    } catch {
-      res.status(404).json({ erreur: "Chambre introuvable" });
-    }
+    await prisma.chambres.delete({ where: { id: Number(req.params.id) } });
+    res.status(204).send();
   },
 );
 

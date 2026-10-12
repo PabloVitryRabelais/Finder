@@ -160,8 +160,53 @@ describe("PATCH /chambres/:id", () => {
   });
 
   it("/chambres/a?prixNuit=150 sans token -> code: 401; json: il faut etre connecté", async () => {
+    const res = await request(app).patch("/chambres/a?prixNuit=150");
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("DELETE /chambres/:id", () => {
+  const id = async () => {
+    const chambres = await request(app).get("/chambres");
+    return chambres.body[chambres.body.length - 1].id;
+  };
+
+  it("/chambres/id token hotelier -> code: 200; json: chambre supprimée", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
     const res = await request(app)
-      .patch("/chambres/a?prixNuit=150");
+      .delete(`/chambres/${await id()}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(204);
+  });
+
+  it("/chambres/id token voyageur -> code: 403; json: acces refusé", async () => {
+    const token = (
+      await request(app).post("/auth/login?email=mail@g.com&mdp=ok")
+    ).body.token;
+    const res = await request(app)
+      .delete(`/chambres/${await id()}`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("/chambres/id token hotelier, chambre d'un autre hotelier -> code: 403; json: acces refusé", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .delete(`/chambres/13`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(403);
+  });
+
+  it("/chambres/id sans token -> code: 401; json: il faut etre connecté", async () => {
+    const res = await request(app).delete(`/chambres/${await id()}`);
     expect(res.statusCode).toBe(401);
   });
 });

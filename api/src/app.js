@@ -301,7 +301,7 @@ app.post(
         dateDepart: new Date(req.body.dateFin),
         nbPersonnes: Number(req.body.nbPersonnes),
         demandeSpeciale: req.body.demandeSpeciale || "",
-        statut: "en attente",
+        statut: "en_attente",
       },
     });
     res.status(201).json(reservation);
@@ -396,21 +396,22 @@ app.delete(
       where: { id: Number(req.params.id) },
     });
     if (!validation) {
-      res.status(404).json({ erreur: "reservation introuvable" });
+      return res.status(404).json({ erreur: "reservation introuvable" });
     }
     if (validation.voyageurId !== req.user.userId) {
-      res.status(403).json({ erreur: "acces refuse" });
+      return res.status(403).json({ erreur: "acces refuse" });
     }
-    if (!transitionValide(validation.statut, "refusee")) {
-      res.status(409).json({
-        erreur: "passage de " + validation.statut + " a refusee impossible",
+    if (!transitionValide(validation.statut, "annulee")) {
+      return res.status(409).json({
+        erreur: "passage de " + validation.statut + " a annulee impossible",
       });
     }
     try {
-      await prisma.reservations.update({
+      const reservation = await prisma.reservations.update({
         where: { id: Number(req.params.id) },
-        data: { statut: "refusee" },
+        data: { statut: "annulee" },
       });
+      res.json(reservation);
     } catch (e) {
       res.status(400).json({ erreur: e.message });
     }
@@ -722,9 +723,10 @@ app.get("/comptes/:id", async (req, res) => {
  */
 app.post("/auth/register", validerBody(schemaRegister), async (req, res) => {
   try {
+    const { mdp, ...donneesCompte } = req.body;
     const compte = await prisma.comptes.create({
       data: {
-        ...req.body,
+        ...donneesCompte,
         motDePasse: await bcrypt.hash(mdp, 10),
         role: "voyageur",
       },
@@ -839,6 +841,7 @@ app.get(
 app.patch(
   "/voyageurs/me",
   authRequis,
+  exigeRole("voyageur"),
   validerBody(schemaRegister.partial()),
   async (req, res) => {
     if (req.body.role !== undefined || req.body.hotelId !== undefined) {
@@ -846,12 +849,13 @@ app.patch(
         erreur: "Modification du role ou de l'hotelId interdite",
       });
     }
-    if (req.body.motDePasse !== undefined) {
-      req.body.motDePasse = await bcrypt.hash(req.body.motDePasse, 10);
+    const { mdp, ...donneesCompte } = req.body;
+    if (mdp !== undefined) {
+      donneesCompte.motDePasse = await bcrypt.hash(mdp, 10);
     }
     const compte = await prisma.comptes.update({
       where: { id: req.user.userId },
-      data: req.body,
+      data: donneesCompte,
     });
     res.json(compte);
   },

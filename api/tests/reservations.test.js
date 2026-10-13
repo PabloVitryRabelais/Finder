@@ -117,7 +117,7 @@ describe("POST /reservations", () => {
     ).body.token;
     const creation = await request(app)
       .post("/reservations")
-      .send({ chambreId: 1, dateDebut, dateFin, nbPersonnes: 2 })
+      .query({ chambreId: 1, dateDebut, dateFin, nbPersonnes: 2 })
       .set("Authorization", `Bearer ${token}`);
     if (creation.body.id) reservationsCreees.push(creation.body.id);
     expect(creation.statusCode).toBe(201);
@@ -143,7 +143,7 @@ describe("POST /reservations", () => {
       .post(
         "/reservations",
       )
-      .send({ chambreId: 1, dateDebut, dateFin, nbPersonnes: 2 })
+      .query({ chambreId: 1, dateDebut, dateFin, nbPersonnes: 2 })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
     expect(res.body).toHaveProperty("erreur");
@@ -159,7 +159,7 @@ describe("POST /reservations", () => {
       .post(
         "/reservations",
       )
-      .send({ chambreId: 999, dateDebut, dateFin, nbPersonnes: 2 })
+      .query({ chambreId: 999, dateDebut, dateFin, nbPersonnes: 2 })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(404);
     expect(res.body).toHaveProperty("erreur");
@@ -175,7 +175,7 @@ describe("POST /reservations", () => {
       .post(
         "/reservations",
       )
-      .send({
+      .query({
         chambreId: 1,
         dateDebut: dateFin,
         dateFin: dateDebut,
@@ -194,7 +194,7 @@ describe("POST /reservations", () => {
     ).body.token;
     const res = await request(app)
       .post("/reservations")
-      .send({ chambreId: 1, dateDebut })
+      .query({ chambreId: 1, dateDebut })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(400);
     expect(res.body).toHaveProperty("erreur");
@@ -210,7 +210,7 @@ describe("PATCH /reservations/:id", () => {
       ).body.token;
       const res = await request(app)
         .patch(`/reservations/${reservationId}`)
-        .send({ statut: "confirmee" })
+        .query({ statut: "confirmee" })
         .set("Authorization", `Bearer ${token}`);
       expect(res.statusCode).toBe(200);
       expect(res.body.id).toBe(reservationId);
@@ -225,7 +225,7 @@ describe("PATCH /reservations/:id", () => {
     ).body.token;
     const res = await request(app)
       .patch("/reservations/1000")
-      .send({ statut: "confirmee" })
+      .query({ statut: "confirmee" })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(404);
     expect(res.body).toHaveProperty("erreur");
@@ -239,7 +239,7 @@ describe("PATCH /reservations/:id", () => {
     ).body.token;
     const res = await request(app)
       .patch("/reservations/2")
-      .send({ statut: "confirmee" })
+      .query({ statut: "confirmee" })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
     expect(res.body).toHaveProperty("erreur");
@@ -253,7 +253,7 @@ describe("PATCH /reservations/:id", () => {
     ).body.token;
     const res = await request(app)
       .patch("/reservations/2")
-      .send({ statut: "confirmee" })
+      .query({ statut: "confirmee" })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
     expect(res.body).toHaveProperty("erreur");
@@ -267,7 +267,7 @@ describe("PATCH /reservations/:id", () => {
     ).body.token;
     const res = await request(app)
       .patch("/reservations/1")
-      .send({ statut: "refusee" })
+      .query({ statut: "refusee" })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(409);
     expect(res.body).toHaveProperty("erreur");

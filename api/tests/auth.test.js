@@ -29,14 +29,16 @@ const nouveauCompte = () => {
 describe("POST /auth/register", () => {
   it("/auth/register -> code: 201; json: compte créé", async () => {
     const compte = nouveauCompte();
-    const res = await request(app).post("/auth/register").send(compte);
+    const res = await request(app).post("/auth/register").query(compte);
     expect(res.statusCode).toBe(201);
     expect(res.body.email).toBe(compte.email);
     expect(res.body).not.toHaveProperty("motDePasse");
   });
 
   it("/auth/register données invalides -> code: 400; json: erreur", async () => {
-    const res = await request(app).post("/auth/register").send({ email: "invalide" });
+    const res = await request(app)
+      .post("/auth/register")
+      .query({ email: "invalide" });
     expect(res.statusCode).toBe(400);
     expect(res.body).toHaveProperty("erreur");
   });
@@ -117,7 +119,9 @@ describe("GET /voyageurs/me", () => {
 describe("PATCH /voyageurs/me", () => {
   it("/voyageurs/me modification du mot de passe -> code: 200", async () => {
     const compte = nouveauCompte();
-    const inscription = await request(app).post("/auth/register").send(compte);
+    const inscription = await request(app)
+      .post("/auth/register")
+      .query(compte);
     expect(inscription.statusCode).toBe(201);
     const token = (
       await request(app).post(
@@ -127,7 +131,7 @@ describe("PATCH /voyageurs/me", () => {
     const nouveauMdp = "Nouveau-voyageur-2026";
     const res = await request(app)
       .patch("/voyageurs/me")
-      .send({ mdp: nouveauMdp })
+      .query({ mdp: nouveauMdp })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
 
@@ -146,14 +150,16 @@ describe("PATCH /voyageurs/me", () => {
     ).body.token;
     const res = await request(app)
       .patch("/voyageurs/me")
-      .send({ prenom: "Test" })
+      .query({ prenom: "Test" })
       .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(403);
     expect(res.body).toHaveProperty("erreur");
   });
 
   it("/voyageurs/me sans token -> code: 401; json: erreur", async () => {
-    const res = await request(app).patch("/voyageurs/me").send({ prenom: "Test" });
+    const res = await request(app)
+      .patch("/voyageurs/me")
+      .query({ prenom: "Test" });
     expect(res.statusCode).toBe(401);
     expect(res.body).toHaveProperty("erreur");
   });

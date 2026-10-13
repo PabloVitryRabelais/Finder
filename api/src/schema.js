@@ -1,19 +1,5 @@
 import { z } from "zod";
 
-export const validerQuery = (schema) => (req, res, next) => {
-  const r = schema.safeParse(req.query);
-  if (!r.success) return res.status(400).json({ erreur: r.error.format() });
-  req.body = r.data;
-  next();
-};
-
-export const validerBody = (schema) => (req, res, next) => {
-  const r = schema.safeParse(req.body);
-  if (!r.success) return res.status(400).json({ erreur: r.error.format() });
-  req.body = r.data;
-  next();
-};
-
 export const schemaStatut = z.object({
   statut: z.enum(["confirmee", "refusee"]),
 });

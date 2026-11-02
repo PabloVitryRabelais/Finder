@@ -69,7 +69,6 @@ router.get("/", validerQuery(schemaGetChambre), async (req, res) => {
  *  get:
  *    tags: [chambres]
  *    summary: Données d'une chambre
- *    security: [{ bearerAuth: [] }]
  *    parameters:
  *      - name: id
  *        in: path
@@ -78,9 +77,8 @@ router.get("/", validerQuery(schemaGetChambre), async (req, res) => {
  *    responses:
  *      200: { description: La chambre demandée }
  *      404: { description: La chambre n'existe pas }
- *      401: { description: Il faut etre connecté }
  */
-router.get("/:id", authRequis, async (req, res) => {
+router.get("/:id", async (req, res) => {
   const id = Number(req.params.id);
   const chambre = await prisma.chambres.findUnique({ where: { id } });
   if (!chambre) return res.status(404).json({ erreur: "Chambre introuvable" });
@@ -235,20 +233,15 @@ router.patch(
  *      403: { description: Acces refusé OU chambre introuvable }
  *      401: { description: Il faut etre connecté }
  */
-router.delete(
-  "/:id",
-  authRequis,
-  exigeRole("hotelier"),
-  async (req, res) => {
-    const validation = await prisma.chambres.findFirst({
-      where: { id: Number(req.params.id), hotelId: req.user.hotelId },
-    });
-    if (!validation) {
-      return res.status(403).json({ erreur: "Acces refusé" });
-    }
-    await prisma.chambres.delete({ where: { id: Number(req.params.id) } });
-    res.status(204).send();
-  },
-);
+router.delete("/:id", authRequis, exigeRole("hotelier"), async (req, res) => {
+  const validation = await prisma.chambres.findFirst({
+    where: { id: Number(req.params.id), hotelId: req.user.hotelId },
+  });
+  if (!validation) {
+    return res.status(403).json({ erreur: "Acces refusé" });
+  }
+  await prisma.chambres.delete({ where: { id: Number(req.params.id) } });
+  res.status(204).send();
+});
 
 export default router;

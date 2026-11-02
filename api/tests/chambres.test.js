@@ -39,35 +39,15 @@ describe("GET /chambres", () => {
 });
 
 describe("GET /chambres/:id", () => {
-  it("/chambres/1 token -> code: 200; json: chambre", async () => {
-    const token = (
-      await request(app).post(
-        "/auth/login?email=a.morel@mail.example&mdp=Voyage-2026!",
-      )
-    ).body.token;
-    const res = await request(app)
-      .get("/chambres/1")
-      .set("Authorization", `Bearer ${token}`);
+  it("/chambres/1-> code: 200; json: chambre", async () => {
+    const res = await request(app).get("/chambres/1");
     expect(res.statusCode).toBe(200);
     expect(res.body.id).toBe(1);
   });
 
-  it("/chambres/999 token -> code: 404; json: chambre non trouvée", async () => {
-    const token = (
-      await request(app).post(
-        "/auth/login?email=a.morel@mail.example&mdp=Voyage-2026!",
-      )
-    ).body.token;
-    const res = await request(app)
-      .get("/chambres/999")
-      .set("Authorization", `Bearer ${token}`);
+  it("/chambres/999 -> code: 404; json: chambre non trouvée", async () => {
+    const res = await request(app).get("/chambres/999");
     expect(res.statusCode).toBe(404);
-    expect(res.body).toHaveProperty("erreur");
-  });
-
-  it("/chambres/1 sans token -> code: 401; json: non autorisé", async () => {
-    const res = await request(app).get("/chambres/1");
-    expect(res.statusCode).toBe(401);
     expect(res.body).toHaveProperty("erreur");
   });
 });
@@ -141,19 +121,19 @@ describe("POST /chambres", () => {
 });
 
 describe("PATCH /chambres/:id", () => {
-    it("/chambres/id token hotelier -> code: 200; json: chambre modifiée", async () => {
-      const token = (
-        await request(app).post(
-          "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
-        )
-      ).body.token;
-      const res = await request(app)
-        .patch(`/chambres/${chambreId}?prixNuit=150`)
-        .set("Authorization", `Bearer ${token}`);
-      expect(res.statusCode).toBe(200);
-      expect(res.body.id).toBe(chambreId);
-      expect(res.body.prixNuit).toBe(150);
-    });
+  it("/chambres/id token hotelier -> code: 200; json: chambre modifiée", async () => {
+    const token = (
+      await request(app).post(
+        "/auth/login?email=ravel@amor.example&mdp=Amor-2026!",
+      )
+    ).body.token;
+    const res = await request(app)
+      .patch(`/chambres/${chambreId}?prixNuit=150`)
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.id).toBe(chambreId);
+    expect(res.body.prixNuit).toBe(150);
+  });
 
   it("/chambres/13?prixNuit=150 token voyegeur ou id d'une chambre qui n'appartient pas a l'hotelelier -> code: 403; json: acces refusé", async () => {
     const token = (

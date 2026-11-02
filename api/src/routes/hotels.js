@@ -62,4 +62,4 @@ router.get("/:id/chambres", async (req, res) => {
   res.json(chambres);
 });
 
-export default router
+export default router;

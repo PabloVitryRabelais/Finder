@@ -1,4 +1,4 @@
-docs/spec.md -- gabarit de départ, à compléter au fil des étapes
+# docs/spec.md -- gabarit de départ, à compléter au fil des étapes
 
 # [ ] étape non franchie (normal en cours de route) [~] garde : ne doit
 
@@ -12,45 +12,45 @@ journal.
 
 ## Étape 1 - en mémoire
 
-[X] npm run dev démarre sans erreur -> le terminal affiche
+[✔] npm run dev démarre sans erreur -> le terminal affiche
 l'adresse du serveur
-[X] GET /health -> 200, {"ok":true}
-[X] Kit chargé une seule fois au démarrage -> readFileSync hors des
+[✔] GET /health -> 200, {"ok":true}
+[✔] Kit chargé une seule fois au démarrage -> readFileSync hors des
 routes
-[X] GET /hotels -> 200, tableau de 3 hôtels
-[X] GET /hotels/:id -> 200 la fiche, ou 404 avec
+[✔] GET /hotels -> 200, tableau de 3 hôtels
+[✔] GET /hotels/:id -> 200 la fiche, ou 404 avec
 corps JSON
-[X] GET /chambres -> 200, tableau de 32
+[✔] GET /chambres -> 200, tableau de 32
 chambres
-[X] GET /chambres/:id -> 200 la fiche, ou 404 avec
+[✔] GET /chambres/:id -> 200 la fiche, ou 404 avec
 corps JSON
-[X] req.params.id converti avec Number() -> /hotels/1 répond 200,
+[✔] req.params.id converti avec Number() -> /hotels/1 répond 200,
 /hotels/abc répond 404
-[X] .env avec PORT et DATABASE_URL -> le fichier existe, il
+[✔] .env avec PORT et DATABASE_URL -> le fichier existe, il
 n'est pas commité
-[X] README.md et api/.env.example -> un camarade démarre sans
+[✔] README.md et api/.env.example -> un camarade démarre sans
 poser de question
-[X] GET /chambres?prix_max=89 -> 200, 12 chambres ; sans
+[✔] GET /chambres?prix_max=89 -> 200, 12 chambres ; sans
 critère, 32
 
-## Étapes 2 à 8 - déclarées, non franchies
+## Étapes 2 à 9
 
-[X] E2 Base MySQL via Prisma : schéma, migration, seed du kit -> tables
+[✔] E2 Base MySQL via Prisma : schéma, migration, seed du kit -> tables
 visibles dans Adminer
-[X] E3 Recherche de chambres disponibles -> GET
-/chambres?... filtre
-[X] E4 Inscription, connexion JWT 24 h, écritures protégées -> sans
+[✔] E3 Recherche de chambres disponibles -> GET
+/chambres?... filtre ; TA-004 retire la chambre 4 pendant la réservation confirmée
+[✔] E4 Inscription, connexion JWT 24 h, écritures protégées -> sans
 jeton 401, mauvais rôle 403
-[X] E5 Validation Zod [ACCEPTABLE] -> corps
+[✔] E5 Validation Zod [ACCEPTABLE] -> corps
 invalide 400, jamais 500
-[X] E6 Réservations et statuts ->
+[✔] E6 Réservations et statuts ->
 en_attente, confirmee, refusee, annulee
-[X] E7 Documentation Swagger de toutes les routes -> /docs
+[✔] E7 Documentation Swagger de toutes les routes -> /docs
 les affiche toutes
-[X] E8 Tests et recette -> npm test
-passe, TA-001 à TA-010
-[X] E9 API répartie en modules -> client Prisma,
-middlewares, schémas et routeurs séparés ; app.js branche les routeurs
+[✔] E8 Tests et recette -> npm test passe, TA-001 à TA-010 consignés
+dans docs/recette.md
+[✔] E9 API répartie en modules -> client Prisma, middlewares, schémas et
+routeurs séparés ; app.js branche les routeurs
 
 ## Gardes
 
@@ -65,5 +65,21 @@ assez grand pour trancher
 
 ## Journal
 
-2026-10-12 E8: création des test dans differents fichiers
-2026-10-13 E9: app.js separé en plusieurs fichiers pour les routes, l'instanciation prisma ect..
+2026-10-06 E7 : documentation OpenAPI de toutes les routes et interface Swagger /docs.
+2026-10-06 E8 : ajout des tests API TA-001 à TA-010 et de la recette client.
+2026-10-06 E8 : tests d'intégration réels avec Vitest/Supertest et MySQL seedé.
+2026-10-07 E3/E8 : TA-004 vérifie que la chambre 4 redevient disponible après
+sa réservation confirmée ; 51 tests réussis.
+2026-10-07 E8/E9 : résultats de TA-001 à TA-010 consignés dans docs/recette.md ;
+modules de routes, middlewares, schémas et Prisma vérifiés.
+
+## Sprint 2 - Frontend
+
+[ ] E1 Socle frontend : React/Vite démarre depuis `front/` ; l'adresse de l'API est centralisée dans `src/config.js`.
+[ ] E2 Recherche : les filtres interrogent `GET /chambres` et les résultats montrent la chambre et son hôtel.
+[ ] E3 Authentification : inscription et connexion utilisent les routes de l'API et affichent les erreurs prévues.
+[ ] E4 Réservation : un voyageur connecté peut réserver une chambre disponible et voir le statut de sa demande.
+[ ] E5 Espace hôtelier : un hôtelier peut gérer ses chambres et traiter les demandes liées à son hôtel.
+[ ] E6 Finition : les parcours principaux sont vérifiés sur ordinateur et mobile, avec leurs états de chargement, vide et erreur documentés.
+
+2026-11-02 Sprint 2, étape 1 : séparation du frontend et de l'API décidée dans ADR 0001.

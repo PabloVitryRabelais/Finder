@@ -4,6 +4,7 @@ function FicheChambre({ chambre, hotel }) {
       <h2>{chambre.numero}</h2>
       <p>disponible: {chambre.disponible ? "Oui" : "Non"}</p>
       <p>Hôtel: {hotel.titre}</p>
+      <p>{chambre.description}</p>
     </div>
   );
 }

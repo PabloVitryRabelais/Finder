@@ -16,13 +16,13 @@ const router = express.Router();
  *        name: categorie
  *        schema: { type: string }
  *      - in: query
- *        name: date_debut
+ *        name: dateDebut
  *        schema: { type: string, format: date-time }
  *      - in: query
- *        name: date_fin
+ *        name: dateFin
  *        schema: { type: string, format: date-time }
  *      - in: query
- *        name: prix_max
+ *        name: prixMax
  *        schema: { type: number }
  *      - in: query
  *        name: hotel
@@ -36,8 +36,8 @@ const router = express.Router();
  */
 router.get("/", validerQuery(schemaGetChambre), async (req, res) => {
   const { categorie } = req.body;
-  const dateDebut = new Date(req.body.date_debut);
-  const dateFin = new Date(req.body.date_fin);
+  const dateDebut = new Date(req.body.dateDebut);
+  const dateFin = new Date(req.body.dateFin);
   const prixMax = Number(req.body.prixMax);
   const hotelId = Number(req.body.hotel);
   const capacite = Number(req.body.capacite);

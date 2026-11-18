@@ -1,34 +1,20 @@
-import FicheHotel from "./composants/FicheHotel.jsx";
-import FicheChambre from "./composants/FicheChambre.jsx";
-import ListeChambres from "./composants/ListeChambres.jsx";
-import chambres from "../../api/finder-data/chambres.json";
-import { useState } from "react";
+import { Link, Outlet } from "react-router-dom";
 
-const hotel = {
-  titre: "Dune",
-  description: "Un hôtel de luxe au bord de la mer",
-};
-
-const nouvelleChambre = {
-  id: 4,
-  numero: "99999",
-  capacite: 2,
-  prix_nuit: 200,
-  disponible: true
-};
-
-function App() {
-  const [chambre, setChambres] = useState(chambres);
+export default function App() {
   return (
-    <center>
-      <h1>Finder</h1>
-      <FicheHotel hotel={hotel} />
-      <ListeChambres chambres={chambre} />
-      <button type="button" onClick={() => setChambres([...chambre, nouvelleChambre])} className="cursor-pointer">
-        Ajouter une chambre
-      </button>
-    </center>
+    <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-6 lg:py-12">
+      <header className="mx-auto mb-6 max-w-5xl">
+        <h1 className="mb-4 text-center text-3xl font-bold sm:text-4xl">Finder</h1>
+        <nav className="flex justify-center gap-4">
+          <Link className="text-teal-800 hover:underline" to="/recherche">Recherche</Link>
+          <Link className="text-teal-800 hover:underline" to="/connexion">Connexion</Link>
+          <Link className="text-teal-800 hover:underline" to="/inscription">Inscription</Link>
+          <Link className="text-teal-800 hover:underline" to="/mes-reservations">Mes réservations</Link>
+        </nav>
+      </header>
+      <main className="mx-auto max-w-5xl">
+        <Outlet />
+      </main>
+    </div>
   );
 }
-
-export default App;

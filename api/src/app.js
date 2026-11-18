@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
 
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
@@ -12,6 +13,9 @@ import reservationsRouter from "./routes/reservations.js";
 import voyageursRouter from "./routes/voyageurs.js";
 
 const app = express();
+app.use(
+  cors({ origin: "http://localhost:5173" }),
+);
 app.use(express.json());
 
 const spec = swaggerJsdoc({
